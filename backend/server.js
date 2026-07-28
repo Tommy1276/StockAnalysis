@@ -1,10 +1,15 @@
+// Load environment variables FIRST
+require('dotenv').config();
+
+console.log("GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID);
+console.log("GOOGLE_CLIENT_SECRET:", process.env.GOOGLE_CLIENT_SECRET);
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const session = require('express-session');
 const passport = require('./config/passport');
 const authRoutes = require('./routes/auth');
-require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -14,6 +19,7 @@ app.use(cors({
   origin: 'http://localhost:5173',
   credentials: true
 }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -22,8 +28,8 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
   saveUninitialized: false,
-  cookie: { 
-    secure: false, // Set to true in production with HTTPS
+  cookie: {
+    secure: false, // Set to true in production (HTTPS)
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
 }));
@@ -33,30 +39,31 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // MongoDB connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/stocksense', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
-
-const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
-db.once('open', () => {
-  console.log('Connected to MongoDB');
-});
+mongoose.connect(
+  process.env.MONGODB_URI || 'mongodb://localhost:27017/stocksense'
+)
+.then(() => console.log('✅ Connected to MongoDB'))
+.catch(err => console.error('❌ MongoDB connection error:', err.message));
 
 // Routes
 app.use('/api/auth', authRoutes);
 
-// Basic route for testing
+// Home Route
 app.get('/', (req, res) => {
-  res.json({ message: 'StockSense API is running!' });
+  res.json({
+    message: 'StockSense API is running!'
+  });
 });
 
-// Health check endpoint
+// Health Check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'OK',
+    timestamp: new Date().toISOString()
+  });
 });
 
+// Start Server
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
